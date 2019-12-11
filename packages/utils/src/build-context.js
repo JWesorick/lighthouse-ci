@@ -24,7 +24,7 @@ function runCommandsUntilFirstSuccess(commands) {
   let result;
 
   for (const [command, args] of commands) {
-    result = childProcess.spawnSync(command, args, {encoding: 'utf8'});
+    result = childProcess.spawnSync(command, args, { encoding: 'utf8' });
     if (result.status === 0) break;
   }
 
@@ -44,6 +44,8 @@ function getCurrentHash() {
     'TRAVIS_COMMIT',
     // Circle CI
     'CIRCLE_SHA1',
+    // Heroku CI
+    'HEROKU_TEST_RUN_COMMIT_VERSION',
   ]);
   if (envHash) return envHash;
 
@@ -66,7 +68,8 @@ function getCommitTime(hash) {
     encoding: 'utf8',
   });
   if (result.status !== 0) {
-    throw new Error('Unable to retrieve committer timestamp from commit');
+    return (new Date()).toISOString();
+    // throw new Error('Unable to retrieve committer timestamp from commit');
   }
 
   return result.stdout.trim();
@@ -91,6 +94,8 @@ function getCurrentBranchRaw_() {
     'CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME',
     'CI_MERGE_REQUEST_SOURCE_BRANCH_NAME',
     'CI_COMMIT_REF_NAME',
+    // Heroku CI
+    'HEROKU_TEST_RUN_BRANCH',
   ]);
   if (envBranch) return envBranch;
 
@@ -142,7 +147,8 @@ function getCommitMessage(hash = 'HEAD') {
     encoding: 'utf8',
   });
   if (result.status !== 0) {
-    throw new Error('Unable to determine commit message with `git log --format=%s -n 1`');
+    return "Unable to get commit message."
+    // throw new Error('Unable to determine commit message with `git log --format=%s -n 1`');
   }
 
   return result.stdout.trim().slice(0, 80);
@@ -157,7 +163,8 @@ function getAuthor(hash = 'HEAD') {
     encoding: 'utf8',
   });
   if (result.status !== 0) {
-    throw new Error('Unable to determine commit author with `git log --format=%aN <%aE> -n 1`');
+    return "Unable to get author."
+    // throw new Error('Unable to determine commit author with `git log --format=%aN <%aE> -n 1`');
   }
 
   return result.stdout.trim().slice(0, 256);
@@ -172,7 +179,8 @@ function getAvatarUrl(hash = 'HEAD') {
     encoding: 'utf8',
   });
   if (result.status !== 0) {
-    throw new Error('Unable to determine commit email with `git log --format=%aE -n 1`');
+    return "https://www.gravatar.com/avatar/a.jpg?d=identicon"
+    // throw new Error('Unable to determine commit email with `git log --format=%aE -n 1`');
   }
 
   // Use default gravatar image, see https://en.gravatar.com/site/implement/images/.
@@ -186,7 +194,7 @@ function getAvatarUrl(hash = 'HEAD') {
  * @return {string}
  */
 function getAncestorHashForMaster(hash = 'HEAD') {
-  const result = childProcess.spawnSync('git', ['rev-parse', `${hash}^`], {encoding: 'utf8'});
+  const result = childProcess.spawnSync('git', ['rev-parse', `${hash}^`], { encoding: 'utf8' });
   // Ancestor hash is optional, so do not throw if it can't be computed.
   // See https://github.com/GoogleChrome/lighthouse-ci/issues/36
   if (result.status !== 0) return '';
